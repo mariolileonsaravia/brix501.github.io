@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Juego de Jardín Avanzado</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #d0f0c0 url('/imagenes/juego.jpg') center/cover no-repeat;
+    overflow: hidden;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+  }
+
+  /* HUD superior */
+  .hud {
+    position: fixed;
+    top: 1vh; left: 1vw;
+    background: rgba(255,255,255,0.85);
+    padding: 1vh 2vw;
+    border-radius: 8px;
+    font-size: clamp(14px, 2vw, 18px);
+    z-index: 20;
+    line-height: 1.4;
+  }
+
+  .garden {
+    position: relative;
+    flex: 1;
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  .plant {
+    font-size: clamp(60px, 10vw, 120px);
+    position: relative;
+    z-index: 1;
+    user-select: none;
+  }
+
+  .creature {
+    position: absolute;
+    font-size: clamp(24px, 5vw, 40px);
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.2s;
+    z-index: 2;
+  }
+  .creature:hover { transform: scale(1.5); }
+
+  /* Botones */
+  button {
+    padding: 0.6em 1.2em;
+    font-size: clamp(14px, 2vw, 18px);
+    cursor: pointer;
+    border: none;
+    border-radius: 10px;
+    margin: 0.3em;
+    user-select: none;
+    transition: background 0.3s, transform 0.2s;
+  }
+
+  button:hover {
+    transform: scale(1.05);
+  }
+
+  #startBtn { background-color: #4caf50; color:white; }
+  #pauseBtn { background-color: #f57c00; color:white; display:none; }
+  #resumeBtn { background-color: #1976d2; color:white; display:none; }
+  #saveBtn { background-color: #8bc34a; color:white; }
+  #loadBtn { background-color: #009688; color:white; }
+
+  #loseOverlay {
+    position: fixed; top:0; left:0; width:100vw; height:100vh;
+    background: rgba(0,0,0,0.7); color:white;
+    font-size: clamp(28px, 6vw, 48px);
+    display:flex; justify-content:center; align-items:center;
+    flex-direction:column; z-index:100; text-align:center;
+    visibility:hidden; opacity:0; transition: opacity 0.5s;
+  }
+  #loseOverlay.visible { visibility:visible; opacity:1; }
+
+  .worm-flash { animation: flash 1s infinite alternate; }
+  @keyframes flash { 0% {opacity:1;} 100% {opacity:0.3;} }
+
+  /* Modal de partidas guardadas */
+  #saveModal {
+    position: fixed;
+    top:0; left:0;
+    width:100vw; height:100vh;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 200;
+  }
+  #saveModalContent {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    width: clamp(250px, 80vw, 400px);
+    max-height: 80vh;
+    overflow-y: auto;
+    text-align: center;
+  }
+  #savedGamesList div {
+    border-bottom: 1px solid #ccc;
+    padding: 5px;
+    cursor: pointer;
+  }
+  #savedGamesList div:hover { background:#f0f0f0; }
+
+  /* Responsividad */
+  @media (max-width: 768px) {
+    .hud {
+      top: auto;
+      bottom: 1vh;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      padding: 0.5em 1em;
+    }
+
+    button {
+      font-size: clamp(12px, 3vw, 16px);
+      padding: 0.5em 1em;
+    }
+
+    #loseOverlay {
+      font-size: clamp(24px, 8vw, 36px);
+      padding: 1em;
+    }
+
+    .plant {
+      font-size: clamp(80px, 15vw, 100px);
+    }
+
+    .creature {
+      font-size: clamp(28px, 7vw, 36px);
+    }
+  }
+
+  @media (max-width: 480px) {
+    body {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .hud {
+      font-size: clamp(12px, 4vw, 16px);
+    }
+
+    button {
+      width: 90%;
+      margin: 0.2em 0;
+    }
+
+    #saveModalContent {
+      width: 90vw;
+      padding: 15px;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<div class="hud" aria-live="polite">
+  ⏱️ Tiempo: <span id="timer">0</span>s<br>
+  🧮 Puntos: <span id="score">0</span><br>
+  🌱 Planta: <span id="plantStage">1</span>/7<br>
+  🏆 Veces max planta: <span id="maxCount">0</span><br>
+  🐛 Golpes gusanos: <span id="wormHits">0</span>/3
+</div>
+
+<div class="garden" id="garden">
+  <div class="plant" id="plant">🌰</div>
+</div>
+
+<div style="margin-top:10px; display:flex; flex-wrap:wrap; justify-content:center;">
+  <button id="startBtn">Inicio</button>
+  <button id="pauseBtn">Pausa</button>
+  <button id="resumeBtn">Reanudar</button>
+  <button id="saveBtn">Guardar</button>
+  <button id="loadBtn">Cargar</button>
+</div>
+
+<div id="lastGameData" style="margin-top:10px;font-size:clamp(12px,2vw,14px);color:#333;text-align:center;"></div>
+
+<div id="loseOverlay" role="alert" aria-modal="true">
+  <div>🐛 PERDISTE! 🐛</div>
+  <button id="restartBtn">Volver a empezar</button>
+</div>
+
+<!-- Modal de partidas guardadas -->
+<div id="saveModal">
+  <div id="saveModalContent">
+    <h2>Partidas Guardadas</h2>
+    <div id="savedGamesList"></div>
+    <button id="closeModalBtn" style="margin-top:15px; padding:5px 10px;">Cerrar</button>
+  </div>
+</div>
+
+<!-- SCRIPT igual que tu versión original -->
+<script>
+/* ... (tu código JS completo tal cual, sin cambios) ... */
+</script>
+</body>
+</html>
+
+<!-- SCRIPT igual que tu versión original -->
+<script>
+/* ... (tu código JS completo tal cual, sin cambios) ... */
+</script>
+</body>
+</html>
+
+
+<script>
+const garden = document.getElementById("garden");
+const plant = document.getElementById("plant");
+const scoreDisplay = document.getElementById("score");
+const timerDisplay = document.getElementById("timer");
+const plantStageDisplay = document.getElementById("plantStage");
+const maxCountDisplay = document.getElementById("maxCount");
+const wormHitsDisplay = document.getElementById("wormHits");
+const loseOverlay = document.getElementById("loseOverlay");
+
+const startBtn = document.getElementById("startBtn");
+const pauseBtn = document.getElementById("pauseBtn");
+const resumeBtn = document.getElementById("resumeBtn");
+const saveBtn = document.getElementById("saveBtn");
+const loadBtn = document.getElementById("loadBtn");
+const restartBtn = document.getElementById("restartBtn");
+const lastGameData = document.getElementById("lastGameData");
+
+// Modal
+const saveModal = document.getElementById("saveModal");
+const savedGamesList = document.getElementById("savedGamesList");
+const closeModalBtn = document.getElementById("closeModalBtn");
+
+let score = 0, time = 0, speedMultiplier = 1, baseSpeedDecrease = 1;
+let wormHits = 0, maxPlantaCount = 0, gameOver = false, paused = false;
+let timerInterval, creatureInterval;
+
+const plantStages=["🌰","🌱","🪴","🌿","🌲","🌳","🌴"];
+
+const creatures = [
+  {name:"gusano",      emoji:"🐛", clickValue:5,  touchValue:-20, spawnWeight:5},  // Gusano: toque negativo medio
+  {name:"mariquita",    emoji:"🐞", clickValue:-3,  touchValue:15, spawnWeight:1},  // Oruga: toque negativo moderado
+  {name:"abeja",       emoji:"🐝", clickValue:-10, touchValue:25, spawnWeight:1},  // Abeja: click alto positivo, toque negativo fuerte
+  {name:"saltamontes", emoji:"🦗", clickValue:7,  touchValue:-10, spawnWeight:3},  // Saltamontes: click bajo positivo, toque negativo moderado
+  {name:"hormiga",     emoji:"🐜", clickValue:6,  touchValue:-5,  spawnWeight:4},  // Hormiga: casi neutra
+  {name:"araña",       emoji:"🕷️", clickValue:8,  touchValue:-50, spawnWeight:2}   // Araña: click positivo decente, toque negativo máximo
+];
+
+
+
+function updateHUD() {
+  scoreDisplay.textContent = score;
+  timerDisplay.textContent = time;
+  plantStageDisplay.textContent = Math.min(Math.floor(score/100)+1,7);
+  wormHitsDisplay.textContent = wormHits;
+  maxCountDisplay.textContent = maxPlantaCount;
+  plant.textContent = plantStages[Math.min(Math.floor(score/100),6)];
+}
+
+function addScore(amount) {
+  score += amount;
+  if(score<0) score=0;
+  updateHUD();
+}
+
+function triggerGameOver() {
+  gameOver = true;
+  clearIntervals();
+  loseOverlay.classList.add("visible");
+  for(let i=0;i<50;i++){
+    const el=document.createElement("div");
+    el.className="creature worm-flash";
+    el.textContent="🐛";
+    el.style.position="fixed";
+    el.style.left=Math.random()*window.innerWidth+"px";
+    el.style.top=Math.random()*window.innerHeight+"px";
+    el.style.fontSize="30px";
+    el.style.pointerEvents="none";
+    el.style.zIndex="150";
+    document.body.appendChild(el);
+  }
+}
+
+function clearIntervals(){
+  clearInterval(timerInterval);
+  clearInterval(creatureInterval);
+}
+
+function startGame(){
+  paused=false; gameOver=false;
+  score=0; time=0; wormHits=0; maxPlantaCount=0;
+  speedMultiplier=1; baseSpeedDecrease=1;
+  updateHUD();
+  loseOverlay.classList.remove("visible");
+  startBtn.style.display="none";
+  pauseBtn.style.display="inline-block";
+  resumeBtn.style.display="none";
+
+  timerInterval = setInterval(()=>{
+    if(!paused){
+      time++;
+      if(time%20===0) speedMultiplier+=0.5;
+      updateHUD();
+    }
+  },1000);
+
+  creatureInterval = setInterval(()=>{ if(!paused&&!gameOver) createCreature(); },1200);
+}
+
+function pauseGame(){
+  paused=true;
+  pauseBtn.style.display="none";
+  resumeBtn.style.display="inline-block";
+}
+
+function resumeGame(){
+  paused=false;
+  pauseBtn.style.display="inline-block";
+  resumeBtn.style.display="none";
+}
+
+function createCreature(){
+  const c = creatures[Math.floor(Math.random()*creatures.length)];
+  const el=document.createElement("div"); el.className="creature"; el.textContent=c.emoji;
+  let x=Math.random()*window.innerWidth, y=-50; 
+  el.style.left=x+"px"; el.style.top=y+"px";
+  garden.appendChild(el);
+
+  let posX=x,posY=y;
+  const plantRect = plant.getBoundingClientRect();
+  const targetX = plantRect.left+plantRect.width/2;
+  const targetY = plantRect.top+plantRect.height/2;
+  const baseSpeed = (80+Math.random()*40)*baseSpeedDecrease;
+
+  function move(){
+    if(gameOver||paused){ requestAnimationFrame(move); return; }
+    const dx=targetX-posX, dy=targetY-posY;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist<40){
+      addScore(c.touchValue);
+      if(c.name==="gusano"){ wormHits++; if(wormHits>3) triggerGameOver(); }
+      el.remove(); return;
+    }
+    const step=(baseSpeed*speedMultiplier)/60;
+    posX+=dx/dist*step; posY+=dy/dist*step;
+    el.style.left=posX+"px"; el.style.top=posY+"px";
+    requestAnimationFrame(move);
+  }
+  requestAnimationFrame(move);
+
+  el.addEventListener("click",()=>{
+    addScore(c.clickValue);
+    el.style.transition="transform 0.3s, opacity 0.3s";
+    el.style.transform="scale(2)"; el.style.opacity="0";
+    setTimeout(()=>el.remove(),300);
+  });
+}
+
+// Guardar partida con nombre
+function saveGameWithName() {
+  const name = prompt("Nombre de la partida:");
+  if(!name) return;
+  const gameData = {score,time,wormHits,maxPlantaCount};
+  localStorage.setItem("gardenSave_" + name, JSON.stringify(gameData));
+  lastGameData.innerHTML = `<strong>Guardado:</strong><br>
+    Puntos: ${score}<br>Tiempo: ${time}s<br>
+    Golpes gusano: ${wormHits}<br>
+    Máximo plantas: ${maxPlantaCount}`;
+  alert("Partida guardada como: " + name);
+}
+
+// Mostrar modal con partidas guardadas
+function openSavedGamesModal() {
+  savedGamesList.innerHTML = "";
+  Object.keys(localStorage).forEach(key => {
+    if(key.startsWith("gardenSave_")) {
+      const data = JSON.parse(localStorage.getItem(key));
+      const div = document.createElement("div");
+      div.innerHTML = `<strong>${key.replace("gardenSave_","")}</strong><br>
+                       Puntos: ${data.score}, Tiempo: ${data.time}s,<br>
+                       Gusanos: ${data.wormHits}, Máx plantas: ${data.maxPlantaCount}`;
+      div.addEventListener("click", () => {
+        loadSavedGame(key);
+        saveModal.style.display="none";
+      });
+      savedGamesList.appendChild(div);
+    }
+  });
+  saveModal.style.display="flex";
+}
+
+// Cargar partida seleccionada
+function loadSavedGame(key) {
+  const data = JSON.parse(localStorage.getItem(key));
+  if(data){
+    score = data.score; time = data.time;
+    wormHits = data.wormHits; maxPlantaCount = data.maxPlantaCount;
+    updateHUD();
+    alert("Partida cargada: " + key.replace("gardenSave_",""));
+  }
+}
+
+// Eventos
+startBtn.addEventListener("click",startGame);
+pauseBtn.addEventListener("click",pauseGame);
+resumeBtn.addEventListener("click",resumeGame);
+saveBtn.addEventListener("click", saveGameWithName);
+loadBtn.addEventListener("click", openSavedGamesModal);
+restartBtn.addEventListener("click",()=>{ document.querySelectorAll(".worm-flash").forEach(e=>e.remove()); startGame(); });
+closeModalBtn.addEventListener("click", ()=> saveModal.style.display="none");
+</script>
+</body>
+</html>
+

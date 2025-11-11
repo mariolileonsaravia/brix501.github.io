@@ -1,0 +1,276 @@
+:root {
+    --verde-oscuro-grisaceo: #345241;
+    --verde-medio-grisaceo: #4A6A55;
+    --verde-grisaceo: #617A6C;
+    --verde-gris-claro: #729e81;
+    --fondo-suave-verde: #618866;
+    --texto-oscuro: #444;
+}
+
+body {
+    font-family: 'Merriweather', serif;
+    margin: 0;
+}
+
+header {
+    background-color: var(--verde-oscuro-grisaceo);
+    padding: 15px;
+    color: white;
+    text-align: center;
+    background-image: url('/imagenes/logo001.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    color: white;
+    padding: 40px;
+    text-align: center;
+}
+
+nav {
+    background-color: var(--verde-medio-grisaceo);
+    overflow: hidden;
+}
+
+nav a {
+    float: left;
+    display: block;
+    color: white;
+    padding: 14px 20px;
+    text-decoration: none;
+}
+
+nav a:hover {
+    background-color: var(--verde-grisaceo);
+}
+
+.container {
+    max-width: 1000px;
+    margin: auto;
+    padding: 20px;
+}
+
+section {
+    margin-bottom: 40px;
+}
+
+footer {
+    background-color: var(--verde-oscuro-grisaceo);
+    color: white;
+    text-align: center;
+    padding: 10px;
+}
+
+.btn-ver-plantas {
+    display: inline-block;
+    background-color: var(--verde-medio-grisaceo);
+    color: white;
+    padding: 10px 25px;
+    font-size: 16px;
+    border-radius: 5px;
+    text-decoration: none;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: background-color 0.3s ease;
+}
+
+.btn-ver-plantas:hover {
+    background-color: var(--verde-grisaceo);
+}
+
+/* Ocultar el catálogo al inicio */
+.oculto {
+    display: none;
+}
+
+/* Botón de "Ver plantas" */
+#verPlantasBtn {
+    background-color: var(--verde-medio-grisaceo);
+    color: white;
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-bottom: 20px;
+}
+
+#verPlantasBtn:hover {
+    background-color: var(--verde-grisaceo);
+}
+
+.catalogo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.planta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #f8f8f8;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+  
+  /* 🔒 Tamaño fijo */
+  height: 300px;
+  box-sizing: border-box;
+  justify-content: space-between; /* Distribuye imagen, nombre y precio */
+}
+
+
+.planta:hover {
+    animation: mantenerGrande 2s forwards;
+}
+
+.nombre {
+    background-color: var(--verde-grisaceo);
+    color: white;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    font-weight: bold;
+    margin-bottom: 0.8rem;
+    order: 0;
+}
+
+.planta img {
+  width: 150px;          /* Ancho fijo */
+  height: 150px;         /* Alto fijo */
+  object-fit: cover;     /* Rellena el espacio sin deformarse, recortando si es necesario */
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+
+.precio {
+    background-color: var(--verde-medio-grisaceo);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    margin-top: 0.5rem;
+    font-weight: 600;
+    border: 2px solid var(--verde-oscuro-grisaceo);
+    order: 2;
+    align-self: center;
+}
+
+.section-title {
+    background-color: var(--verde-oscuro-grisaceo);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 1rem;
+}
+
+#plantar {
+    padding: 40px 20px;
+}
+
+#plantar .catalogo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-top: 30px;
+    justify-items: center;
+}
+
+.paso {
+    width: 100%;
+    max-width: 350px;
+    min-height: 260px;
+}
+
+.paso .icono {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.paso p {
+    font-size: 0.95em;
+    color: var(--texto-oscuro);
+    padding: 0 10px;
+    margin-top: 0.5rem;
+}
+
+/* Centrar el último paso cuando hay 7 */
+@media (min-width: 768px) {
+    #plantar .catalogo-grid .paso:nth-child(7) {
+        grid-column: 2 / span 1;
+        justify-self: center;
+    }
+}
+
+#beneficios {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1.5rem;
+    margin-top: 20px;
+}
+
+.beneficio-cuadro {
+    background-color: var(--verde-gris-claro);
+    color: white;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 250px;
+    transition: transform 0.3s ease;
+    cursor: default;
+}
+
+.beneficio-cuadro:hover {
+    transform: scale(1.05);
+}
+
+.beneficio-cuadro .icono {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.beneficio-cuadro strong {
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.beneficio-cuadro p {
+    flex-grow: 1;
+    font-weight: 600;
+    line-height: 1.3;
+}
+@keyframes mantenerGrande {
+    from {
+      transform: scale(1);
+    }
+    to {
+      transform: scale(1.05);
+    }
+  }
+  
+  .planta:hover {
+    animation: mantenerGrande 0.3s forwards;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  }
+  
+  @keyframes caer {
+    0% {
+      transform: translateY(-100px) scale(1);
+    }
+    100% {
+      transform: translateY(100vh) scale(1.2);
+    }
+  }
+  
+  .oculto {
+    display: none !important;
+  }
+
+
+
